@@ -96,7 +96,7 @@ big.data.frame <- function(nrow, classes,
   
   i <- 0 # To shut up a warning with foreach...
   x@data <- foreach(i=1:length(classes)) %do% {
-    if (classes[i] == "character") {
+    if (classes[i] == "character" | classes[i] == "char") {
       ans <- big.char::big.char(nrow, maxchar=maxchar[i],
                                 init=init[[i]],
                                 backingfile=backingfile[i],
