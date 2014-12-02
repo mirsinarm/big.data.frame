@@ -38,7 +38,7 @@ big.read.table <- function(file, nrows=100000, sep=",",
     cn <- read.table(file,sep=sep,nrows=1)
   }
 
-  print(cn)
+  #print(cn)
 
   if (estimate) {
       warning("Estimate doesn't use rowfilter()")
@@ -70,29 +70,34 @@ big.read.table <- function(file, nrows=100000, sep=",",
       nlines <- foreach(x=iter, .combine=sum) %do%
       return( nrow(rowfilter(x)) )
     }
-  
-    print(nlines)
+    #print(nlines)
     iter <- iread.table(file, header=header,
     row.names=row.names, sep=sep,
     nrows=nrows, as.is=as.is)
     x <- nextElem(iter)
-  
     if (!header) {names(x) <- cn}
     if (!is.null(rowfilter)) {x <- rowfilter(x)}
-    print(cols)
+    # print(cols)
     if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
-    print(dim(x))
-    print(names(x))
+    #print(dim(x))
+    #print(names(x))
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
     print(theclasses)
+    print(class(theclasses))
     ans <- big.data.frame(nlines, location=location,
     classes=theclasses,
     names=names(x))
-    ans[1:nrow(x),] <- x
+    print(class(x))
+    print(dim(x))
+    print(typeof(x))
+    #ans[,1:ncol(x)] <- x[,1:ncol(x)]
+    for (i in 1:ncol(x)){
+       ans[,i] <- x[,i]
+     }
+  #print("Ans fail")
     nextline <- nrow(x) + 1
     ans
-
     foo <- foreach(x=iter, .combine=rbind) %do% {
       if (!is.null(rowfilter)) x <- rowfilter(x)
       if (!is.null(cols)) x <- x[,cols,drop=FALSE]

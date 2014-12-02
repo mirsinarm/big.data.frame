@@ -12,9 +12,10 @@ file <- "withheader.csv"
 
 rwh1 <- big.read.table(file = "withheader.csv",as.is = T,header = TRUE)
 rwh2 <- big.read.table(file = "withheader.csv",as.is = T,header = FALSE)
-
-
 length(read.table("withheader.csv",sep=",",nrows=1,header=F))
+
+
+
 
 # WITHOUT HEADER
 wh <- data.frame(rep(c(1L:26L),2000),rep(letters,2000),rep(rnorm(26),2000))
