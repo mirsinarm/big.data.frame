@@ -175,7 +175,7 @@ setMethod('dim', signature(x="big.data.frame"),
 setMethod('length', signature(x="big.data.frame"),
   function(x) return(ncol(x)))
 
-<<<<<<< HEAD
+# <<<<<<< HEAD
 
 #' @title length functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
@@ -226,7 +226,7 @@ tail.big.data.frame <- function(x, n=6) {
   }
 }
 
-=======
+# =======
 #' @title print summary of the big data frame
 #' @rdname big.data.frame-methods
 #' @author Rose Brewin
@@ -301,7 +301,7 @@ setGeneric('is.big.data.frame', function(x) standardGeneric('is.big.data.frame')
 #' @exportMethod is.big.data.frame
 setMethod('is.big.data.frame', signature(x='big.data.frame'),
           function(x) return(TRUE))
->>>>>>> 83e9cc6cb15c135848afc72a3041f1d18eee1546
+# >>>>>>> 83e9cc6cb15c135848afc72a3041f1d18eee1546
 
 #
 # Get/set signatures!
