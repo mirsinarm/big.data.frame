@@ -491,7 +491,7 @@ setMethod("$<-", "big.data.frame",
 #' @param index a vector of indices or names of the columns to be removed
 #' @author Rose Brewin
 #' @export
-drop.cols <- function(x, index) {
+drop.cols <- function(x, index, location=NULL) {
   if (is.character(index)) {
     index <- which(x@desc$names %in% index)
   }  
@@ -502,7 +502,7 @@ drop.cols <- function(x, index) {
   } 
   ans <- big.data.frame(nrow=x@desc$dim[1],
                         classes=x@desc$classes[-index],
-                        location=NULL,
+                        location=location,
                         names=x@desc$names[-index],
                         maxchar=x@desc$maxchar[-index],
                         init=NULL)
@@ -521,7 +521,7 @@ drop.cols <- function(x, index) {
 #'  with a single column
 #' @param after the position after which new.col will be appear
 #' @export
-add.col <- function(x, new.col, after, new.name) {
+add.col <- function(x, new.col, after, new.name, location=NULL) {
   if ((after > ncol(x)) | (after < 0) |
         !is.numeric(after) | (!length(after) == 1)) {
     stop("after parameter is out of bounds")
@@ -536,12 +536,13 @@ add.col <- function(x, new.col, after, new.name) {
   new.data <- append(x@data[], new.col, after=after)
   names(new.data) <- new.names
   
-  ans <- big.data.frame(x@desc$dim[1], classes=new.classes, names=new.names)
+  ans <- big.data.frame(x@desc$dim[1], 
+                        classes=new.classes,
+                        names=new.names,
+                        location=location)
   ans@data <- new.data
   return(ans)
 }
-
-
 
 #' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
 #' @return a new \code{\link{big.data.frame}} object
