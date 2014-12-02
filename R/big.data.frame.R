@@ -146,10 +146,6 @@ attach.big.data.frame <- function(location) {
   return(x)
 }
 
-
-#
-# Need is, as, names... functionality
-
 #' @title ncol functionality for a big.data.frame
 #' @rdname big.data.frame-methods
 #' @exportMethod ncol
@@ -177,7 +173,7 @@ setMethod('length', signature(x="big.data.frame"),
 
 # <<<<<<< HEAD
 
-#' @title length functionality for a big.data.frame
+#' @title head functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
 #' @param x a big.data.frame
@@ -201,7 +197,7 @@ head.big.data.frame <- function(x, n=6) {
   }
 }
 
-#' @title length functionality for a big.data.frame
+#' @title tail functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
 #' @param x a big.data.frame
@@ -491,7 +487,7 @@ setMethod("$<-", "big.data.frame",
 #' @param index a vector of indices or names of the columns to be removed
 #' @author Rose Brewin
 #' @export
-drop.cols <- function(x, index) {
+big.drop.cols <- function(x, index, location=NULL) {
   if (is.character(index)) {
     index <- which(x@desc$names %in% index)
   }  
@@ -502,7 +498,7 @@ drop.cols <- function(x, index) {
   } 
   ans <- big.data.frame(nrow=x@desc$dim[1],
                         classes=x@desc$classes[-index],
-                        location=NULL,
+                        location=location,
                         names=x@desc$names[-index],
                         maxchar=x@desc$maxchar[-index],
                         init=NULL)
@@ -521,12 +517,7 @@ drop.cols <- function(x, index) {
 #'  with a single column
 #' @param after the position after which new.col will be appear
 #' @export
-add.col <- function(x, new.col, after, new.name) {
-  if ((after > ncol(x)) | (after < 0) |
-        !is.numeric(after) | (!length(after) == 1)) {
-    stop("after parameter is out of bounds")
-  }
-  
+big.add.col <- function(x, new.col, after, new.name, location=NULL) {
   if (class(new.col) == "big.matrix") new.class <- "double"
   else if (class(new.col) == "big.char") new.class <- "char"
   else stop ("new.col must be either a big.matrix or big.char object")
@@ -536,12 +527,13 @@ add.col <- function(x, new.col, after, new.name) {
   new.data <- append(x@data[], new.col, after=after)
   names(new.data) <- new.names
   
-  ans <- big.data.frame(x@desc$dim[1], classes=new.classes, names=new.names)
+  ans <- big.data.frame(x@desc$dim[1], 
+                        classes=new.classes,
+                        names=new.names,
+                        location=location)
   ans@data <- new.data
   return(ans)
 }
-
-
 
 #' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
 #' @return a new \code{\link{big.data.frame}} object
