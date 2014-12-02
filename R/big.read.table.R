@@ -25,69 +25,81 @@
 #' head(x)
 #' @export
 big.read.table <- function(file, nrows=100000, sep=",",
-header=TRUE, row.names=NULL,
-cols=NULL, rowfilter=NULL,
-as.is=TRUE, estimate=FALSE,
-location=NULL)
-{ if (!header){
-cl <- length(read.table(file,sep=sep,nrows=1,header=F))
-cn <- paste0("V",c(1:cl))
-} else{
-cn <- read.table(file,sep=sep,nrows=1)
-}
-print(cn)
-if (estimate) {
-warning("Estimate doesn't use rowfilter()")
-nlines <- getnrows(file)
-x <- read.table(file, sep=sep, row.names=row.names,
-nrows=min(nlines, 1000), header=header)
-if (!is.null(cols)) x <- x[,cols,drop=FALSE]
-cat("Estimated read size without row filtering:",
-floor(object.size(x)*nlines/nrow(x)/1e6), "MB\n")
-if (interactive()) {
-ANSWER <- readline("Continue with read (Y/n)? ")
-if (substring(ANSWER, 1, 1) != "Y") {
-warning("Terminated read.")
-return(NULL)
-}
-}
-}
-if (is.null(rowfilter) & header) nlines <- getnrows(file)-1
-else if (is.null(rowfilter) & !header) nlines <- getnrows(file)
-else {
-iter <- iread.table(file, header=header,
-row.names=row.names, sep=sep,
-nrows=nrows, as.is=as.is)
-nlines <- foreach(x=iter, .combine=sum) %do%
-return( nrow(rowfilter(x)) )
-}
-print(nlines)
-iter <- iread.table(file, header=header,
-row.names=row.names, sep=sep,
-nrows=nrows, as.is=as.is)
-x <- nextElem(iter)
-if (!header) {names(x) <- cn}
-if (!is.null(rowfilter)) {x <- rowfilter(x)}
-print(cols)
-if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
-print(dim(x))
-print(names(x))
-theclasses <- sapply(x, class)
-theclasses[theclasses=="numeric"] <- "double"
-print(theclasses)
-ans <- big.data.frame(nlines, location=location,
-classes=theclasses,
-names=names(x))
-ans[1:nrow(x),] <- x
-nextline <- nrow(x) + 1
-ans
-foo <- foreach(x=iter, .combine=rbind) %do% {
-if (!is.null(rowfilter)) x <- rowfilter(x)
-if (!is.null(cols)) x <- x[,cols,drop=FALSE]
-gc()
-ans[nextline:(nextline+nrow(x)-1),] <- x
-nextline <- nextline + nrow(x)
-return(nrow(x))
-}
-return(ans)
+                          header=TRUE, row.names=NULL,
+                          cols=NULL, rowfilter=NULL,
+                          as.is=TRUE, estimate=FALSE,
+                          location=NULL) { 
+  if (!header){
+       cl <- length(read.table(file,sep=sep,nrows=1,header=F))
+        cn <- paste0("V",c(1:cl))
+  } 
+  
+  else {
+    cn <- read.table(file,sep=sep,nrows=1)
+  }
+
+  print(cn)
+
+  if (estimate) {
+      warning("Estimate doesn't use rowfilter()")
+      nlines <- getnrows(file)
+      x <- read.table(file, sep=sep, row.names=row.names,
+      nrows=min(nlines, 1000), header=header)
+      
+      if (!is.null(cols)) x <- x[,cols,drop=FALSE]
+      cat("Estimated read size without row filtering:",
+      floor(object.size(x)*nlines/nrow(x)/1e6), "MB\n")
+      
+      if (interactive()) {
+        ANSWER <- readline("Continue with read (Y/n)? ")
+        if (substring(ANSWER, 1, 1) != "Y") {
+          warning("Terminated read.")
+          return(NULL)
+        }
+      }
+    }
+  
+    if (is.null(rowfilter) & header) nlines <- getnrows(file)-1
+  
+    else if (is.null(rowfilter) & !header) nlines <- getnrows(file)
+  
+    else {
+      iter <- iread.table(file, header=header,
+      row.names=row.names, sep=sep,
+      nrows=nrows, as.is=as.is)
+      nlines <- foreach(x=iter, .combine=sum) %do%
+      return( nrow(rowfilter(x)) )
+    }
+  
+    print(nlines)
+    iter <- iread.table(file, header=header,
+    row.names=row.names, sep=sep,
+    nrows=nrows, as.is=as.is)
+    x <- nextElem(iter)
+  
+    if (!header) {names(x) <- cn}
+    if (!is.null(rowfilter)) {x <- rowfilter(x)}
+    print(cols)
+    if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
+    print(dim(x))
+    print(names(x))
+    theclasses <- sapply(x, class)
+    theclasses[theclasses=="numeric"] <- "double"
+    print(theclasses)
+    ans <- big.data.frame(nlines, location=location,
+    classes=theclasses,
+    names=names(x))
+    ans[1:nrow(x),] <- x
+    nextline <- nrow(x) + 1
+    ans
+
+    foo <- foreach(x=iter, .combine=rbind) %do% {
+      if (!is.null(rowfilter)) x <- rowfilter(x)
+      if (!is.null(cols)) x <- x[,cols,drop=FALSE]
+      gc()
+      ans[nextline:(nextline+nrow(x)-1),] <- x
+      nextline <- nextline + nrow(x)
+      return(nrow(x))
+    }
+    return(ans)
 }
