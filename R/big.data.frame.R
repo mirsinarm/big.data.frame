@@ -549,43 +549,45 @@ big.add.col <- function(x, new.col, after, new.name, location=NULL) {
 #' @param index the position of the changed class column
 #' @export
 big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL) {
-      if (class(new.col) == "big.matrix") new.class <- "double"
-      else if (class(new.col) == "big.char") new.class <- "char"
-      else stop ("new.col must be either a big.matrix or big.char object")
+  # fixing the class types in case the user inputs an alternative:
+  if (class(index) == "character") index <- which(x@desc$names == index)
+  if (class(new.col) == "big.matrix") new.class <- "double"
+  else if (class(new.col) == "big.char") new.class <- "char"
+  else stop ("new.col must be either a big.matrix or big.char object")
 
-      # If a new name wasn't provided:
-      if(is.null(new.name)) new.name <- paste("V", index, sep=".")
-      
-      # This is SO not an elegant way of handling these problems
-      # Edge cases:  index=1, index=ncol(x)
-      if (index == 1) {
-        new.classes <- c(new.class, x@desc$classes[(index+1):ncol(x)])
-        new.names <- c(new.name, x@desc$names[(index+1):ncol(x)])
-        new.data <- c(new.col, x@data[(index+1):ncol(x)])
-        names(new.data) <- new.names
-      }
-      
-      else if (index == ncol(x)) {
-        new.classes <- c(x@desc$classes[1:(index-1)], new.class)
-        new.names <- c(x@desc$names[1:(index-1)], new.name)
-        new.data <- c(x@data[1:(index-1)], new.col)
-        names(new.data) <- new.names
-      }
-      
-      else {
-        new.classes <- c(x@desc$classes[1:(index-1)], new.class, x@desc$classes[(index+1):ncol(x)])
-        new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
-        new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
-        names(new.data) <- new.names
-      }
-      
-      # Create the new big.data.frame with the updated column
-      ans <- big.data.frame(x@desc$dim[1], 
-                            classes=new.classes,
-                            names=new.names,
-                            location=location)
-      ans@data <- new.data
-      return(ans)
+  # If a new name wasn't provided:
+  if(is.null(new.name)) new.name <- paste("V", index, sep=".")
+  
+  # This is SO not an elegant way of handling these problems
+  # Edge cases:  index=1, index=ncol(x)
+  if (index == 1) {
+    new.classes <- c(new.class, x@desc$classes[(index+1):ncol(x)])
+    new.names <- c(new.name, x@desc$names[(index+1):ncol(x)])
+    new.data <- c(new.col, x@data[(index+1):ncol(x)])
+    names(new.data) <- new.names
+  }
+  
+  else if (index == ncol(x)) {
+    new.classes <- c(x@desc$classes[1:(index-1)], new.class)
+    new.names <- c(x@desc$names[1:(index-1)], new.name)
+    new.data <- c(x@data[1:(index-1)], new.col)
+    names(new.data) <- new.names
+  }
+  
+  else {
+    new.classes <- c(x@desc$classes[1:(index-1)], new.class, x@desc$classes[(index+1):ncol(x)])
+    new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
+    new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
+    names(new.data) <- new.names
+  }
+  
+  # Create the new big.data.frame with the updated column
+  ans <- big.data.frame(x@desc$dim[1], 
+                        classes=new.classes,
+                        names=new.names,
+                        location=location)
+  ans@data <- new.data
+  return(ans)
 }
 
 
