@@ -95,7 +95,7 @@ big.data.frame <- function(nrow, classes,
   }
   
   i <- 0 # To shut up a warning with foreach...
-  x@data <- foreach(i=1:length(classes)) %do% {
+  x@data <- foreach(i=1:length(classes)) %do% {    
     if (classes[i] == "character") {
       ans <- big.char::big.char(nrow, maxchar=maxchar[i],
                                 init=init[[i]],
@@ -631,7 +631,12 @@ as.big.data.frame <- function(x, names=NULL) {
 
 #####################################################################################
 ###  Additions to big.char:  it has no head or tail function, which is necessary
-###  for 
+###  for printing out x@data
+
+
+#  These functions are mostly working, but I am currently using the old version of 
+#  big.char (which we worked on in class) so I'm not sure if these will actually get
+#  us any mileage.
 
 
 # 
