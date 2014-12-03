@@ -369,9 +369,9 @@ setMethod("[", signature(x = "big.data.frame", i="missing", j="ANY", drop="missi
     function(x, i, j, ..., drop) {
     #cat("BDF get:(missing,ANY,missing)\n")
         n <- names(x)[j]
-        
+
         return(as.data.frame(lapply(x@data[n], function(a) a[]),
-        stringsAsFactors=FALSE))
+                          stringsAsFactors=FALSE))
     })
 
 
@@ -425,6 +425,7 @@ signature(x = "big.data.frame", i="missing", j="ANY", drop="logical"),
         #               } # else drop==TRUE next with one column:
         #               return(as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)[[1]])
         #             } # and otherwise we have multiple columns to extract:
+
         return(as.data.frame(lapply(x@data[n], function(a) a[]),
         stringsAsFactors=FALSE))
     })
@@ -476,12 +477,11 @@ setMethod("$<-", "big.data.frame",
           })
 
 
+
+
 #
 # Removing columns from a big.data.frame
 #
-
-
-
 
 #' @title Remove columns from an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with fewer columns
@@ -542,7 +542,7 @@ big.add.col <- function(x, new.col, after, new.name, location=NULL) {
 
 #' @title Change the class of a column in an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with the updated column
-#' @author Miranda Sinnott-Armstrong (blatantly modified from Rose)
+#' @author Miranda Sinnott-Armstrong, Rose Brewin
 #' @param x a big.data.frame object
 #' @param new.col either a big.char object or a big.matrix object
 #'  with a single column

@@ -1,0 +1,3 @@
+structure(list(dim = c(10, 2), maxchar = c(NA, 10), names = c("first", 
+"second"), classes = c("double", "character")), .Names = c("dim", 
+"maxchar", "names", "classes"))
