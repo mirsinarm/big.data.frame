@@ -299,7 +299,8 @@ setGeneric('is.big.data.frame', function(x) standardGeneric('is.big.data.frame')
 #' @exportMethod is.big.data.frame
 setMethod('is.big.data.frame', signature(x='big.data.frame'),
           function(x) return(TRUE))
-# >>>>>>> 83e9cc6cb15c135848afc72a3041f1d18eee1546
+
+
 
 #
 # Get/set signatures!
@@ -334,10 +335,6 @@ setMethod("[",
           })
 
 
-#####################################################
-# Baobao
-#####################################################
-
 #' @rdname big.data.frame-methods
 #' @author Miranda Sinnott-Armstrong
 #' @exportMethod [<-
@@ -350,8 +347,12 @@ setMethod("[<-",
               stop("Warning: index is negative.  Not sure what you think this will do.")
             }
 
-            # To code:  if the classes change
-            # check for each item in the row
+            # What if the classes of the columns don't match the classes
+            # of the elements of the object you're inputting?
+            
+            # Currently, throws an error and produces an NA.
+            # Not sure of desired behavior.
+            
             
             # repeat value so that it is the same length as the number of cols
             val <- rep(value, length.out=ncol(x))
@@ -364,28 +365,14 @@ setMethod("[<-",
 
 #' @rdname big.data.frame-methods
 #' @exportMethod [
-setMethod("[",
-signature(x = "big.data.frame", i="missing", j="ANY", drop="missing"),
+setMethod("[", signature(x = "big.data.frame", i="missing", j="ANY", drop="missing"),
     function(x, i, j, ..., drop) {
     #cat("BDF get:(missing,ANY,missing)\n")
         n <- names(x)[j]
         
-        # Otherwise, multiple column extraction:
         return(as.data.frame(lapply(x@data[n], function(a) a[]),
         stringsAsFactors=FALSE))
-        
-        
-        ####  This is what Jay wrote, so I commented it out in case
-        ####  we wanted to keep it:
-        
-        #             # Consider simplifying depending on factor issue, eventually:
-        #             if (length(j)==1) return(as.data.frame(x@data[[j]][],
-        #                                                    stringsAsFactors=FALSE)[[1]])
-        #             # Otherwise, multiple column extraction:
-        #             return(as.data.frame(lapply(x@data[j], function(a) a[]),
-        #                                  stringsAsFactors=FALSE))
     })
-
 
 
 #' @rdname big.data.frame-methods
@@ -394,17 +381,25 @@ signature(x = "big.data.frame", i="missing", j="ANY", drop="missing"),
 setMethod("[<-",
           signature(x = "big.data.frame", i="missing", j="ANY"),
           function(x, i, j, ..., value) {
+            
+            # Check whether the class of the new data matches the class
+            # of the old data
+            if(y@desc$classes[j] != typeof(value[j])) {
+              if (interactive()) {
+                ANSWER <- readline(paste("This replacement will change ", y@desc$classes[j], 
+                                         "s into ", typeof(value[j]),
+                                         "s\nand create a new big.data.frame. Continue with replacement (Y/n)? ", sep=""))
+                if (substring(ANSWER, 1, 1) != "Y")
+                  stop("Terminated replacement.")
+              }
+
+            
             # Edge cases:
-            #  x[-2,]
+            #  x[,-2]
             if(sum(j < 0)) {
               stop("Warning: index is negative.  Not sure what this should do.")
-            }
-            
-            # To code:  when the class changes for that column
-#             if(typeof(x[1, j]) != typeof(value)
-           # same as in the $-setting
-                 
-            
+            }                 
+
             #cat("BDF set:(missing,ANY,missing)\n")
             val <- rep(value, length.out=nrow(x))
             for (jj in 1:nrow(x)) {
@@ -479,9 +474,13 @@ setMethod("$<-", "big.data.frame",
             return(x)
           })
 
+
 #
 # Removing columns from a big.data.frame
 #
+
+
+
 
 #' @title Remove columns from an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with fewer columns
@@ -496,7 +495,7 @@ big.drop.cols <- function(x, index, location=NULL) {
   if (any(index > ncol(x) | index <= 0)) {
     stop("Index out of bounds")
   } else if (length(unique(index)) >= ncol(x)) {
-    stop("Index is entire big data frame")
+    stop("Index is entire big.data.frame")
   } 
   ans <- big.data.frame(nrow=x@desc$dim[1],
                         classes=x@desc$classes[-index],
@@ -509,7 +508,7 @@ big.drop.cols <- function(x, index, location=NULL) {
 }
 
 #
-# Adding an extra column
+# Adding extra columns to a big.data.frame
 #
 
 #' @title Add an extra column to an existing \code{\link{big.data.frame}}
@@ -537,6 +536,91 @@ big.add.col <- function(x, new.col, after, new.name, location=NULL) {
   return(ans)
 }
 
+
+
+
+#' @title Change the class of a column in an existing \code{\link{big.data.frame}}
+#' @return a new \code{\link{big.data.frame}} object, with the updated column
+#' @author Miranda Sinnott-Armstrong (blatantly modified from Rose)
+#' @param x a big.data.frame object
+#' @param new.col either a big.char object or a big.matrix object
+#'  with a single column
+#' @param index the position of the changed class column
+#' @export
+big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL) {
+  if (class(new.col) == "big.matrix") new.class <- "double"
+  else if (class(new.col) == "big.char") new.class <- "char"
+  else stop ("new.col must be either a big.matrix or big.char object")
+  
+  # If a new name wasn't provided:
+  if(is.null(new.name)) new.name <- paste("V", index, sep=".")
+  
+  new.classes <- c(x@desc$classes[1:(index-1)], class(new.col), x@desc$classes[(index+1):ncol(x)])
+  new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
+  new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
+  names(new.data) <- new.names
+  
+  ans <- big.data.frame(x@desc$dim[1], 
+                        classes=new.classes,
+                        names=new.names,
+                        location=location)
+  ans@data <- new.data
+  return(ans)
+}
+
+
+else {
+  if (class(new.col) == "big.matrix") new.class <- "double"
+  else if (class(new.col) == "big.char") new.class <- "char"
+  else stop ("new.col must be either a big.matrix or big.char object")
+  
+  new.classes <- append(x@desc$classes, new.class, after=after)
+  new.names <- append(x@desc$names, new.name, after=after)
+  new.data <- append(x@data[], new.col, after=after)
+  names(new.data) <- new.names
+  
+  ans <- big.data.frame(x@desc$dim[1], 
+                        classes=new.classes,
+                        names=new.names,
+                        location=location)
+  ans@data <- new.data
+  return(ans)
+  
+  
+  
+  #                 x@data <- foreach(i=1:length(classes)) %do% {
+  #                   if (classes[i] == "character") {
+  #                     ans <- big.char::big.char(nrow, maxchar=maxchar[i],
+  #                                               init=init[[i]],
+  #                                               backingfile=backingfile[i],
+  #                                               descriptorfile=descriptorfile[i],
+  #                                               backingpath=location)
+  #                   } else {
+  #                     ans <- bigmemory::big.matrix(nrow, 1, type=classes[i],
+  #                                                  init=init[[i]],
+  #                                                  backingfile=backingfile[i],
+  #                                                  descriptorfile=descriptorfile[i],
+  #                                                  backingpath=location)
+  #                   }
+  #                   
+  #                 
+  
+  # Creates a new big.data.frame with the new class.
+  classes <- c(x@desc$classes[1:(j-1)], class(value), x@desc$classes[(j+1):ncol(x)])
+  names <- c(x@desc$names[1:(j-1)], names(value), x@desc$names[(j+1):ncol(x)])
+  
+  ans <- big.data.frame(nrow=nrow(x),
+                        classes=classes,
+                        location=location,
+                        names=names,
+                        maxchar=x@desc$maxchar[-index],
+                        init=NULL)
+  ans@data <- x@data[-index]                
+  
+}
+          }
+
+
 #' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
 #' @return a new \code{\link{big.data.frame}} object
 #' @param x a big.matrix object
@@ -562,11 +646,58 @@ as.big.data.frame <- function(x, names=NULL) {
     ###  However, I modified the descriptor file by hand.
     ###  So the question is, either 1) suppress the warning, or 2) change the 
     ###      names() function to modify the descriptor file.
-    
+
     names(ans) <- names
     ans@desc$names <- names
   }
   
   return(ans)
 }
+
+
+
+
+#####################################################################################
+###  Additions to big.char:  it has no head or tail function, which is necessary
+###  for 
+
+
+
+#' @title head functionality for a big.char object
+#' @author Miranda Sinnott-Armstrong
+#' @rdname big.char-methods
+#' @param x a \code{\link{big.char}}
+#' @export head
+#' 
+setMethod('head', signature(x='big.char'),
+      function(x, n=6) {
+        if (ncol(x) < n) return(x[])
+        else return(x[1:n])
+      }
+)
+
+#' @title tail functionality for a big.char object
+#' @author Miranda Sinnott-Armstrong
+#' @rdname big.char-methods
+#' @param x a \code{\link{big.char}}
+#' @export tail
+setMethod('tail', signature(x='big.char'),
+      function(x, n=6) {
+        if (ncol(x) < n) return(x[])
+        else return(x[(ncol(x)-n+1):ncol(x)])
+      }
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
