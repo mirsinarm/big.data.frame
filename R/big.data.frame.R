@@ -392,6 +392,7 @@ setMethod("[<-",
                 if (substring(ANSWER, 1, 1) != "Y")
                   stop("Terminated replacement.")
               }
+            }
 
             
             # Edge cases:
@@ -548,77 +549,46 @@ big.add.col <- function(x, new.col, after, new.name, location=NULL) {
 #' @param index the position of the changed class column
 #' @export
 big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL) {
-  if (class(new.col) == "big.matrix") new.class <- "double"
-  else if (class(new.col) == "big.char") new.class <- "char"
-  else stop ("new.col must be either a big.matrix or big.char object")
-  
-  # If a new name wasn't provided:
-  if(is.null(new.name)) new.name <- paste("V", index, sep=".")
-  
-  new.classes <- c(x@desc$classes[1:(index-1)], class(new.col), x@desc$classes[(index+1):ncol(x)])
-  new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
-  new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
-  names(new.data) <- new.names
-  
-  ans <- big.data.frame(x@desc$dim[1], 
-                        classes=new.classes,
-                        names=new.names,
-                        location=location)
-  ans@data <- new.data
-  return(ans)
+      if (class(new.col) == "big.matrix") new.class <- "double"
+      else if (class(new.col) == "big.char") new.class <- "char"
+      else stop ("new.col must be either a big.matrix or big.char object")
+
+      # If a new name wasn't provided:
+      if(is.null(new.name)) new.name <- paste("V", index, sep=".")
+      
+      # This is SO not an elegant way of handling these problems
+      # Edge cases:  index=1, index=ncol(x)
+      if (index == 1) {
+        new.classes <- c(new.class, x@desc$classes[(index+1):ncol(x)])
+        new.names <- c(new.name, x@desc$names[(index+1):ncol(x)])
+        new.data <- c(new.col, x@data[(index+1):ncol(x)])
+        names(new.data) <- new.names
+      }
+      
+      else if (index == ncol(x)) {
+        new.classes <- c(x@desc$classes[1:(index-1)], new.class)
+        new.names <- c(x@desc$names[1:(index-1)], new.name)
+        new.data <- c(x@data[1:(index-1)], new.col)
+        names(new.data) <- new.names
+      }
+      
+      else {
+        new.classes <- c(x@desc$classes[1:(index-1)], new.class, x@desc$classes[(index+1):ncol(x)])
+        new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
+        new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
+        names(new.data) <- new.names
+      }
+      
+      # Create the new big.data.frame with the updated column
+      ans <- big.data.frame(x@desc$dim[1], 
+                            classes=new.classes,
+                            names=new.names,
+                            location=location)
+      ans@data <- new.data
+      return(ans)
 }
 
 
-else {
-  if (class(new.col) == "big.matrix") new.class <- "double"
-  else if (class(new.col) == "big.char") new.class <- "char"
-  else stop ("new.col must be either a big.matrix or big.char object")
-  
-  new.classes <- append(x@desc$classes, new.class, after=after)
-  new.names <- append(x@desc$names, new.name, after=after)
-  new.data <- append(x@data[], new.col, after=after)
-  names(new.data) <- new.names
-  
-  ans <- big.data.frame(x@desc$dim[1], 
-                        classes=new.classes,
-                        names=new.names,
-                        location=location)
-  ans@data <- new.data
-  return(ans)
-  
-  
-  
-  #                 x@data <- foreach(i=1:length(classes)) %do% {
-  #                   if (classes[i] == "character") {
-  #                     ans <- big.char::big.char(nrow, maxchar=maxchar[i],
-  #                                               init=init[[i]],
-  #                                               backingfile=backingfile[i],
-  #                                               descriptorfile=descriptorfile[i],
-  #                                               backingpath=location)
-  #                   } else {
-  #                     ans <- bigmemory::big.matrix(nrow, 1, type=classes[i],
-  #                                                  init=init[[i]],
-  #                                                  backingfile=backingfile[i],
-  #                                                  descriptorfile=descriptorfile[i],
-  #                                                  backingpath=location)
-  #                   }
-  #                   
-  #                 
-  
-  # Creates a new big.data.frame with the new class.
-  classes <- c(x@desc$classes[1:(j-1)], class(value), x@desc$classes[(j+1):ncol(x)])
-  names <- c(x@desc$names[1:(j-1)], names(value), x@desc$names[(j+1):ncol(x)])
-  
-  ans <- big.data.frame(nrow=nrow(x),
-                        classes=classes,
-                        location=location,
-                        names=names,
-                        maxchar=x@desc$maxchar[-index],
-                        init=NULL)
-  ans@data <- x@data[-index]                
-  
-}
-          }
 
 
 #' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
@@ -662,37 +632,37 @@ as.big.data.frame <- function(x, names=NULL) {
 ###  for 
 
 
-
-#' @title head functionality for a big.char object
-#' @author Miranda Sinnott-Armstrong
-#' @rdname big.char-methods
-#' @param x a \code{\link{big.char}}
-#' @export head
-#' 
-setMethod('head', signature(x='big.char'),
-      function(x, n=6) {
-        if (ncol(x) < n) return(x[])
-        else return(x[1:n])
-      }
-)
-
-#' @title tail functionality for a big.char object
-#' @author Miranda Sinnott-Armstrong
-#' @rdname big.char-methods
-#' @param x a \code{\link{big.char}}
-#' @export tail
-setMethod('tail', signature(x='big.char'),
-      function(x, n=6) {
-        if (ncol(x) < n) return(x[])
-        else return(x[(ncol(x)-n+1):ncol(x)])
-      }
-)
-
-
-
-
-
-
+# 
+# #' @title head functionality for a big.char object
+# #' @author Miranda Sinnott-Armstrong
+# #' @rdname big.char-methods
+# #' @param x a \code{\link{big.char}}
+# #' @export head
+# #' 
+# setMethod('head', signature(x='big.char'),
+#       function(x, n=6) {
+#         if (ncol(x) < n) return(x[])
+#         else return(x[1:n])
+#       }
+# )
+# 
+# #' @title tail functionality for a big.char object
+# #' @author Miranda Sinnott-Armstrong
+# #' @rdname big.char-methods
+# #' @param x a \code{\link{big.char}}
+# #' @export tail
+# setMethod('tail', signature(x='big.char'),
+#       function(x, n=6) {
+#         if (ncol(x) < n) return(x[])
+#         else return(x[(ncol(x)-n+1):ncol(x)])
+#       }
+# )
+# 
+# 
+# 
+# 
+# 
+# 
 
 
 
