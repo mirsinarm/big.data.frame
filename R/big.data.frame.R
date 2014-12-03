@@ -177,51 +177,53 @@ setMethod('length', signature(x="big.data.frame"),
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
 #' @param x a big.data.frame
-#' @export head.big.data.frame
+#' @export head
 #' 
-head.big.data.frame <- function(x, n=6) {
-  if(ncol(x) > 1000) {
-    warning("Your big.data.frame has more than 1000 columns.  Only the first 999 were printed.")
-    max.col <- 999
-  }
-  else max.col <- ncol(x)
-  if (nrow(x) < n) {
-    ans <- data.frame(x[,1:max.col])
-    colnames(ans) <- names(x@data)
-    return(ans)
-  }
-  else {
-    ans <- data.frame(x[1:n,1:max.col])
-    colnames(ans) <- names(x@data[1:max.col])
-    return(ans)
-  }
-}
+setMethod('head', signature(x='big.data.frame'),
+          function(x, n=6) {
+            if(ncol(x) > 1000) {
+              warning("Your big.data.frame has more than 1000 columns.  Only the first 999 were printed.")
+              max.col <- 999
+            }
+            else max.col <- ncol(x)
+            if (nrow(x) < n) {
+              ans <- data.frame(x[,1:max.col])
+              colnames(ans) <- names(x@data)
+              return(ans)
+            }
+            else {
+              ans <- data.frame(x[1:n,1:max.col])
+              colnames(ans) <- names(x@data[1:max.col])
+              return(ans)
+            }
+          }
+)
 
 #' @title tail functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
 #' @param x a big.data.frame
-#' @export tail.big.data.frame
-tail.big.data.frame <- function(x, n=6) {
-  if(ncol(x) > 1000) {
-    warning("Your big.data.frame has more than 1000 columns.  Only the first 999 were printed.")
-    max.col <- 999
-  }
-  else max.col <- ncol(x)
-  if (nrow(x) < n) {
-    ans <- data.frame(x[,1:max.col])
-    colnames(ans) <- names(x@data[1:max.col])
-    return(ans)
-  }
-  else {
-    end <- nrow(x)  
-    ans <- data.frame(x[(end-n+1):end,1:max.col])
-    rownames(ans) <- (end-n+1):end
-    colnames(ans) <- names(x@data[1:max.col])
-    return(ans)
-  }
-}
-
+#' @export tail
+setMethod('tail', signature(x='big.data.frame'),
+          function(x, n=6) {
+            if(ncol(x) > 1000) {
+              warning("Your big.data.frame has more than 1000 columns.  Only the first 999 were printed.")
+              max.col <- 999
+            }
+            else max.col <- ncol(x)
+            if (nrow(x) < n) {
+              ans <- data.frame(x[,1:max.col])
+              colnames(ans) <- names(x@data[1:max.col])
+              return(ans)
+            }
+            else {
+              end <- nrow(x)  
+              ans <- data.frame(x[(end-n+1):end,1:max.col])
+              rownames(ans) <- (end-n+1):end
+              colnames(ans) <- names(x@data[1:max.col])
+              return(ans)
+            }
+          })
 # =======
 #' @title print summary of the big data frame
 #' @rdname big.data.frame-methods
