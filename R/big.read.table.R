@@ -83,8 +83,8 @@ big.read.table <- function(file, nrows=100000, sep=",",
     #print(names(x))
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
-    print(theclasses)
-    print(class(theclasses))
+    #print(theclasses)
+    #print(class(theclasses))
     ans <- big.data.frame(nlines, location=location,
     classes=theclasses,
     names=names(x))
@@ -96,15 +96,19 @@ big.read.table <- function(file, nrows=100000, sep=",",
        ans[,i] <- x[,i]
      }
   #print("Ans fail")
-    nextline <- nrow(x) + 1
-    ans
-    foo <- foreach(x=iter, .combine=rbind) %do% {
-      if (!is.null(rowfilter)) x <- rowfilter(x)
-      if (!is.null(cols)) x <- x[,cols,drop=FALSE]
-      gc()
-      ans[nextline:(nextline+nrow(x)-1),] <- x
-      nextline <- nextline + nrow(x)
-      return(nrow(x))
+  nextline <- nrow(x) + 1
+  #print(nextline)
+  #print(cols)
+  foo <- foreach(x=iter, .combine=rbind) %do% {
+    if (!is.null(rowfilter)) x <- rowfilter(x)
+    if (!is.null(cols)) x <- x[,cols,drop=FALSE]
+    gc()
+    print(dim(x))
+    for (i in 1:ncol(x)){
+      ans[as.integer(nextline:(nextline+nrow(x)-1)),i] <- x[,i]
     }
-    return(ans)
+    nextline <- as.integer(nextline + nrow(x))
+    return(nrow(x))
+  }
+  return(ans)
 }
