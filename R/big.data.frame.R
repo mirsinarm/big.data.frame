@@ -381,10 +381,9 @@ setMethod("[", signature(x = "big.data.frame", i="missing", j="ANY", drop="missi
 setMethod("[<-",
           signature(x = "big.data.frame", i="missing", j="ANY"),
           function(x, i, j, ..., value) {
-            
             # Check whether the class of the new data matches the class
             # of the old data
-            if(y@desc$classes[j] != typeof(value[j])) {
+            if(x@desc$classes[j] != typeof(value[j])) {
               if (interactive()) {
                 ANSWER <- readline(paste("This replacement will change ", y@desc$classes[j], 
                                          "s into ", typeof(value[j]),
@@ -393,14 +392,11 @@ setMethod("[<-",
                   stop("Terminated replacement.")
               }
             }
-
-            
             # Edge cases:
             #  x[,-2]
             if(sum(j < 0)) {
               stop("Warning: index is negative.  Not sure what this should do.")
-            }                 
-
+            }
             #cat("BDF set:(missing,ANY,missing)\n")
             val <- rep(value, length.out=nrow(x))
             for (jj in 1:nrow(x)) {

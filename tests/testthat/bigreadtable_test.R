@@ -11,7 +11,12 @@ names(wh) <- c("int","factor","num")
 # WITH HEADER
 write.csv(wh,"withheader.csv",row.names=F)
 
+file <- "withheader.csv"
 x <- big.read.table(file = "withheader.csv",header = TRUE)
+y <- big.read.table(file = "withoutheader.csv",header = FALSE)
+
+y.csv <- read.csv(file = "withoutheader.csv",header = FALSE)
+
 # WITHOUT HEADER
 write.table(wh,"withoutheader.csv",sep=",",row.names=FALSE,col.names=FALSE)
 

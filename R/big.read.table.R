@@ -32,8 +32,7 @@ big.read.table <- function(file, nrows=100000, sep=",",
   if (!header){
        cl <- length(read.table(file,sep=sep,nrows=1,header=F))
       cn <- paste0("V",c(1:cl))
-  } 
-  else {
+  } else {
     cn <- read.table(file,sep=sep,nrows=1)
   }
   #print(cn)
@@ -80,18 +79,18 @@ big.read.table <- function(file, nrows=100000, sep=",",
     print(names(x))
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
-    print(theclasses)
-    print(class(theclasses))
+    #print(theclasses)
+    #print(class(theclasses))
     ans <- big.data.frame(nlines, location=location,
                           classes=theclasses, names=names(x))
-    print(class(x))
+    #print(class(x))
     print(dim(x))
     print(typeof(x))
-    ans[,1:ncol(x)] <- x[,1:ncol(x)]
+    print(ncol(x))
     for (i in 1:ncol(x)){
        ans[,i] <- x[,i]
      }
-  #print("Ans fail")
+  print("Ans after")
   nextline <- nrow(x) + 1
   #print(nextline)
   #print(cols)
