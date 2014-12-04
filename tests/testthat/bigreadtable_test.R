@@ -1,15 +1,17 @@
 ###########################
 # big.read.table tests
 
-#setwd("~/Dropbox/stat662/big.data.frame/testing")
+
 # Library
 library(testthat)
-
+setwd("~/Dropbox/stat662/big.data.frame/tests/testthat")
 # Make the data frame
 wh <- data.frame(rep(c(1L:26L),500),rep(letters,500),rep(rnorm(26),500))
 names(wh) <- c("int","factor","num")
 # WITH HEADER
 write.csv(wh,"withheader.csv",row.names=F)
+
+x <- big.read.table(file = "withheader.csv",header = TRUE)
 # WITHOUT HEADER
 write.table(wh,"withoutheader.csv",sep=",",row.names=FALSE,col.names=FALSE)
 

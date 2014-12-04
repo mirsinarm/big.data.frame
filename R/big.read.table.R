@@ -31,15 +31,12 @@ big.read.table <- function(file, nrows=100000, sep=",",
                           location=NULL) { 
   if (!header){
        cl <- length(read.table(file,sep=sep,nrows=1,header=F))
-        cn <- paste0("V",c(1:cl))
+      cn <- paste0("V",c(1:cl))
   } 
-  
   else {
     cn <- read.table(file,sep=sep,nrows=1)
   }
-
   #print(cn)
-
   if (estimate) {
       warning("Estimate doesn't use rowfilter()")
       nlines <- getnrows(file)
@@ -77,21 +74,20 @@ big.read.table <- function(file, nrows=100000, sep=",",
     x <- nextElem(iter)
     if (!header) {names(x) <- cn}
     if (!is.null(rowfilter)) {x <- rowfilter(x)}
-    # print(cols)
+    print(cols)
     if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
-    #print(dim(x))
-    #print(names(x))
+    print(dim(x))
+    print(names(x))
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
-    #print(theclasses)
-    #print(class(theclasses))
+    print(theclasses)
+    print(class(theclasses))
     ans <- big.data.frame(nlines, location=location,
-    classes=theclasses,
-    names=names(x))
+                          classes=theclasses, names=names(x))
     print(class(x))
     print(dim(x))
     print(typeof(x))
-    #ans[,1:ncol(x)] <- x[,1:ncol(x)]
+    ans[,1:ncol(x)] <- x[,1:ncol(x)]
     for (i in 1:ncol(x)){
        ans[,i] <- x[,i]
      }
