@@ -29,13 +29,14 @@ big.read.table <- function(file, nrows=100000, sep=",",
                           cols=NULL, rowfilter=NULL,
                           as.is=TRUE, estimate=FALSE,
                           location=NULL) { 
-  if (!header){
+  # Modified by Baobao Zhang
+  if (!header) {
        cl <- length(read.table(file,sep=sep,nrows=1,header=F))
       cn <- paste0("V",c(1:cl))
   } else {
     cn <- read.table(file,sep=sep,nrows=1)
   }
-  #print(cn)
+  # End of modification
   if (estimate) {
       warning("Estimate doesn't use rowfilter()")
       nlines <- getnrows(file)
@@ -66,65 +67,36 @@ big.read.table <- function(file, nrows=100000, sep=",",
       nlines <- foreach(x=myiter, .combine=sum) %do%
       return( nrow(rowfilter(x)) )
     }
-    print(paste0("Number of Lines: :",nlines))
+    # Modification by Baobao Zhang
+    print(paste0("Number of Rows: ",nlines))
     myiter <- iread.table(file, header=header,
-      row.names=row.names, sep=sep,
-      nrows=nrows, as.is=as.is)
+                          row.names=row.names, sep=sep,
+                          nrows=nrows, as.is=as.is)
     x <- nextElem(myiter)
     if (!header) {names(x) <- cn}
     if (!is.null(rowfilter)) {x <- rowfilter(x)}
-#     print(cols)
     if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
-#     print(dim(x))
-#     print(names(x))
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
-    #print(theclasses)
-    #print(class(theclasses))
     ans <- big.data.frame(nlines, location=location,
                           classes=theclasses, names=names(x))
-    #print(class(x))
-#     print(dim(x))
-#     print(typeof(x))
-#     print(ncol(x))
-    for (i in 1:ncol(x)){
-       ans[,i] <- x[,i]
-     }
-#   print("Ans after")
+    # for loop to input the data into big.data.frame by column
+    foreach(k=1:ncol(x),.combine = 'cbind') %do%{
+      ans[,k] <- x[,k]
+    }
+    # End of Modification
   nextline <- nrow(x) + 1
-  #print(nextline)
-  #print(cols)
-  #print(class(myiter)
   foo <- foreach(x=myiter, .combine=rbind) %do% {
     if (!is.null(rowfilter)) x <- rowfilter(x)
     if (!is.null(cols)) x <- x[,cols,drop=FALSE]
-<<<<<<< HEAD
     gc()
+    # Modification by Baobao Zhang
     rowindex <- as.integer(nextline:(nextline+nrow(x)-1))
-    #print(rowindex)
     foreach(k=1:ncol(x),.combine = 'cbind') %do%{
-      print(paste0("column",k))
-      print(paste0("Class of columns ",class(x[,k])))
-      print(paste0("Type of columns ",typeof(x[,k])))
-      print(paste0("Dimension of the big.data.frame ", length(ans[rowindex,k])))
-      print(paste0("Class of the big.data.frame ", class(ans[rowindex,k])))
-      ans[rowindex,k] <- x[rowindex,k]
-      print("Successful insertion of a column.")
-=======
-#     gc()
-#     print(dim(x))
-    print(ncol(x))
-    for (i in 1:ncol(x)){
-      class(i)
-      ans[as.integer(nextline:(nextline+nrow(x)-1)),i] <- x[,i]
->>>>>>> c2c3cb6f8638c24809814455fd92e545bd4204ea
+      ans[rowindex,k] <- x[,k]
     }
-#     for (k in 1:ncol(x)){
-#       print(paste0("k=",k))
-#       ans[as.integer(nextline:(nextline+nrow(x)-1)),k] <- x[,k]
-#     }
+    # End of Modification
     nextline <- as.integer(nextline + nrow(x))
-    print(paste0("Nextline:",nextline))
     return(nrow(x))
   }
   return(ans)
