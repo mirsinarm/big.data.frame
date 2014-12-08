@@ -171,8 +171,9 @@ setMethod('dim', signature(x="big.data.frame"),
 setMethod('length', signature(x="big.data.frame"),
   function(x) return(ncol(x)))
 
-# <<<<<<< HEAD
-
+#####################################################
+#  Added by Miranda, Baobao, Rose
+#####################################################
 #' @title head functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
@@ -199,6 +200,9 @@ setMethod('head', signature(x='big.data.frame'),
           }
 )
 
+#####################################################
+#  Added by Miranda, Baobao, Rose
+#####################################################
 #' @title tail functionality for a big.data.frame
 #' @author Miranda Sinnott-Armstrong
 #' @rdname big.data.frame-methods
@@ -224,7 +228,10 @@ setMethod('tail', signature(x='big.data.frame'),
               return(ans)
             }
           })
-# =======
+
+#####################################################
+#  Added by Rose, Baobao, Miranda
+#####################################################
 #' @title print summary of the big data frame
 #' @rdname big.data.frame-methods
 #' @author Rose Brewin
@@ -239,6 +246,9 @@ setMethod("summary", signature=(object="big.data.frame"), function(object, ...) 
   return(summary(object[1], ...))
 })
 
+#####################################################
+#  Added by Rose, Miranda, Baobao
+#####################################################
 #' @title print structure of the big data frame
 #' @rdname big.data.frame-methods
 #' @author Rose Brewin
@@ -264,6 +274,9 @@ setMethod('str', signature=(object="big.data.frame"), function (object, ...)
 })
 
 
+#####################################################
+#  Added by Rose, Baobao, Miranda
+#####################################################
 #' @title names functionality for a big.data.frame
 #' @rdname big.data.frame-methods
 #' @author Rose Brewin
@@ -271,6 +284,9 @@ setMethod('str', signature=(object="big.data.frame"), function (object, ...)
 setMethod('names', signature(x="big.data.frame"),
           function(x) return(names(x@data)))
 
+#####################################################
+#  Added by Rose, Baobao, Miranda
+#####################################################
 #' @title set the names of a big.data.frame 
 #' @rdname big.data.frame-methods
 #' @author Rose Brewin
@@ -284,6 +300,9 @@ setMethod('names<-', signature(x="big.data.frame", value="character"),
             return(x)
           })
 
+#####################################################
+#  Added by Rose, Miranda, Baobao
+#####################################################
 #' @title Generic function is.big.data.frame()
 #' @description Do we have a \code{\link{big.data.frame}}?
 #' @details No further detail is needed.
@@ -319,6 +338,10 @@ setMethod("[",
                                  stringsAsFactors=FALSE))
           })
 
+
+#####################################################
+#  Added by Rose, Miranda, Baobao
+#####################################################
 #' @rdname big.data.frame-methods
 #' @exportMethod [
 setMethod("[<-",
@@ -358,6 +381,9 @@ setMethod("[",
             if (ncol(x)==1) return(as.data.frame(x@data[[1]][i],
                                                  stringsAsFactors=FALSE)[[1]])
             # Otherwise, have multiple columns to extract
+### Jay's original code:  issue was that outputted rownames were incorrect
+#             return(as.data.frame(lapply(x@data, function(a) a[i]),
+#                                  stringsAsFactors=FALSE))
             ans <- as.data.frame(lapply(x@data, function(a) a[i]),
                           stringsAsFactors=FALSE)
             rownames(ans) <- i
@@ -382,7 +408,11 @@ setMethod("[<-",
             
             # Currently, throws an error and produces an NA.
             # Not sure of desired behavior.
-            
+
+###  Jay's original code
+#             #cat("BDF set:(ANY,missing,missing)\n")
+#             for (jj in 1:ncol(x)) x@data[[jj]][i] <- value[,jj]
+#             return(x)
             
             # repeat value so that it is the same length as the number of cols
             val <- rep(value, length.out=ncol(x))
@@ -398,35 +428,42 @@ setMethod("[<-",
 setMethod("[", signature(x = "big.data.frame", i="missing", j="ANY", drop="missing"),
     function(x, i, j, ..., drop) {
     #cat("BDF get:(missing,ANY,missing)\n")
-        n <- names(x)[j]
-        if(length(j) == 1) return(slot(x, 'data')[[j]][]) # this is entirely to pass one test in testthat
-        return(as.data.frame(lapply(x@data[n], function(a) a[]),
+      
+###  Jay's original code
+#       # Consider simplifying depending on factor issue, eventually:
+#       if (length(j)==1) return(as.data.frame(x@data[[j]][],
+#                                              stringsAsFactors=FALSE)[[1]])
+#       # Otherwise, multiple column extraction:
+#       return(as.data.frame(lapply(x@data[j], function(a) a[]),
+#                            stringsAsFactors=FALSE))
+
+      n <- names(x)[j]
+      if(length(j) == 1) return(slot(x, 'data')[[j]][]) # this is entirely to pass one test in testthat
+      return(as.data.frame(lapply(x@data[n], function(a) a[]),
                           stringsAsFactors=FALSE))
     })
 
 
 #' @rdname big.data.frame-methods
-#' @author Miranda Sinnott-Armstrong
 #' @exportMethod [<-
 setMethod("[<-",
           signature(x = "big.data.frame", i="missing", j="ANY"),
           function(x, i, j, ..., value) {
+###  Jay's original code:
+#             function(x, i, j, ..., value) {
+#               #cat("BDF set:(missing,ANY,missing)\n")
+#               return("Not done")
+            
+            
             # Check whether the class of the new data matches the class
             # of the old data
-#             if(x@desc$classes[j] != typeof(value[j])) {
-#               if (interactive()) {
-#                 ANSWER <- readline(paste("This replacement will change ", y@desc$classes[j], 
-#                                          "s into ", typeof(value[j]),
-#                                          "s\nand create a new big.data.frame. Continue with replacement (Y/n)? ", sep=""))
-#                 if (substring(ANSWER, 1, 1) != "Y")
-#                   stop("Terminated replacement.")
-#               }
-#             }
-            # Edge cases:
-            #  x[,-2]
+            # Must check whether the CONTENTS of the new data match the CONTENTS
+            # of the old data
+
             if(sum(j < 0)) {
               stop("Warning: index is negative.  Not sure what this should do.")
             }
+            
             #cat("BDF set:(missing,ANY,missing)\n")
             val <- rep(value, length.out=nrow(x))
             for (jj in 1:nrow(x)) {
@@ -442,20 +479,27 @@ setMethod("[",
 signature(x = "big.data.frame", i="missing", j="ANY", drop="logical"),
     function(x, i, j, ..., drop) {
         #cat("BDF get:(missing,ANY,ANY)\n")
+      
+###  Jay's original code:
+      # Our only change was to add the capability to extract by column
+      # name in addition to index number
         n <- names(x)[j]
-        #             if (length(j)==1) {
-        #               if (!drop) {
-        #                 ans <- as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)
-        #                 names(ans) <- names(x@data)[j]
-        #                 return(ans)
-        #               } # else drop==TRUE next with one column:
-        #               return(as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)[[1]])
-        #             } # and otherwise we have multiple columns to extract:
+
+        if (length(j)==1) {
+          if (!drop) {
+            ans <- as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)
+            names(ans) <- names(x@data)[j]
+            return(ans)
+          } # else drop==TRUE next with one column:
+          return(as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)[[1]])
+        } # and otherwise we have multiple columns to extract:
+        
         return(as.data.frame(lapply(x@data[n], function(a) a[]),
-        stringsAsFactors=FALSE, drop=drop))
+                    stringsAsFactors=FALSE, drop=drop))
     })
 
 
+###  Jay's original code:  unchanged by us
 #' @rdname big.data.frame-methods
 #' @exportMethod [
 setMethod("[",
@@ -468,7 +512,9 @@ setMethod("[",
                                  stringsAsFactors=FALSE))
           })
 
-
+#####################################################
+#  Added by Miranda, Rose, Baobao
+#####################################################
 #' @rdname big.data.frame-methods
 #' @author Miranda Sinnott-Armstrong
 #' @exportMethod $
@@ -482,6 +528,9 @@ setMethod("$", "big.data.frame",
             else return(slot(x, 'data')[[name]][])
           })
 
+#####################################################
+#  Added by Miranda, Rose, Baobao
+#####################################################
 #' @rdname big.data.frame-methods
 #' @author Miranda Sinnott-Armstrong
 #' @exportMethod $<-
@@ -503,10 +552,9 @@ setMethod("$<-", "big.data.frame",
 
 
 
-
-#
-# Removing columns from a big.data.frame
-#
+######################################################################
+# Entirely new functions written by Rose, Miranda, and Baobao
+######################################################################
 
 #' @title Remove columns from an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with fewer columns
@@ -533,9 +581,7 @@ big.drop.cols <- function(x, index, location=NULL) {
   return(ans)
 }
 
-#
-# Adding extra columns to a big.data.frame
-#
+
 
 #' @title Add an extra column to an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with one extra column
@@ -561,8 +607,6 @@ big.add.col <- function(x, new.col, after, new.name, location=NULL) {
   ans@data <- new.data
   return(ans)
 }
-
-
 
 
 #' @title Change the class of a column in an existing \code{\link{big.data.frame}}
@@ -616,8 +660,6 @@ big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL
 }
 
 
-
-
 #' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
 #' @return a new \code{\link{big.data.frame}} object
 #' @param x a big.matrix object
@@ -652,17 +694,9 @@ as.big.data.frame <- function(x, names=NULL) {
 }
 
 
-
-
-#####################################################################################
+##################################################################
 ###  Additions to big.char:  it has no head or tail function, which is necessary
 ###  for printing out x@data
-
-
-#  These functions are mostly working, but I am currently using the old version of 
-#  big.char (which we worked on in class) so I'm not sure if these will actually get
-#  us any mileage.
-
 
 # 
 # #' @title head functionality for a big.char object
@@ -689,17 +723,4 @@ as.big.data.frame <- function(x, names=NULL) {
 #         else return(x[(ncol(x)-n+1):ncol(x)])
 #       }
 # )
-# 
-# 
-# 
-# 
-# 
-# 
-
-
-
-
-
-
-
-
+#
