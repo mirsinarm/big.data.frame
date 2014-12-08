@@ -321,6 +321,19 @@ setMethod("[",
 
 #' @rdname big.data.frame-methods
 #' @exportMethod [
+setMethod("[<-",
+          signature(x = "big.data.frame", i="ANY", j="ANY"),
+          function(x, i, j, ..., value) {
+            #cat("BDF get:(ANY,ANY,missing) row subset extraction.\n")
+            # Could simplify this, but wait for now; factor issue.
+            if(length(i)*length(j) < length(value)) {stop("Items to replace do not match replacement length.")}
+            x@data[[j]][i] <- value
+            return(x)
+          })
+
+
+#' @rdname big.data.frame-methods
+#' @exportMethod [
 setMethod("[",
           signature(x = "big.data.frame", i="ANY", j="missing", drop="missing"),
           function(x, i, j, ..., drop) {
@@ -383,15 +396,15 @@ setMethod("[<-",
           function(x, i, j, ..., value) {
             # Check whether the class of the new data matches the class
             # of the old data
-            if(x@desc$classes[j] != typeof(value[j])) {
-              if (interactive()) {
-                ANSWER <- readline(paste("This replacement will change ", y@desc$classes[j], 
-                                         "s into ", typeof(value[j]),
-                                         "s\nand create a new big.data.frame. Continue with replacement (Y/n)? ", sep=""))
-                if (substring(ANSWER, 1, 1) != "Y")
-                  stop("Terminated replacement.")
-              }
-            }
+#             if(x@desc$classes[j] != typeof(value[j])) {
+#               if (interactive()) {
+#                 ANSWER <- readline(paste("This replacement will change ", y@desc$classes[j], 
+#                                          "s into ", typeof(value[j]),
+#                                          "s\nand create a new big.data.frame. Continue with replacement (Y/n)? ", sep=""))
+#                 if (substring(ANSWER, 1, 1) != "Y")
+#                   stop("Terminated replacement.")
+#               }
+#             }
             # Edge cases:
             #  x[,-2]
             if(sum(j < 0)) {
