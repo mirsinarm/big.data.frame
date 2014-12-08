@@ -339,12 +339,29 @@ setMethod("[",
           function(x, i, j, ..., drop) {
             #stop("Not yet BDF get:(ANY, missing)")
             #cat("BDF get:(ANY,missing,missing) row subset extraction.\n")
+            
+            # Negative indices
+            if(any(i < 0)) {
+              # Need to check whether negative indices are mixed with positive
+              if(any(i > 0)) stop("Negative indices can only mix with 0, not positive indices.")
+              
+              # If everything's kosher, extract the correct columns
+              else {
+                ii <- abs(i)
+                ind <- 1:nrow(x)
+                ind <- ind[-c(ii)]
+                i <- ind
+              }
+            }
+            
             # Here, current default is drop=TRUE
             if (ncol(x)==1) return(as.data.frame(x@data[[1]][i],
                                                  stringsAsFactors=FALSE)[[1]])
             # Otherwise, have multiple columns to extract
-            return(as.data.frame(lapply(x@data, function(a) a[i]),
-                                 stringsAsFactors=FALSE))
+            ans <- as.data.frame(lapply(x@data, function(a) a[i]),
+                          stringsAsFactors=FALSE)
+            rownames(ans) <- i
+            return(ans)
           })
 
 
