@@ -60,17 +60,17 @@ big.read.table <- function(file, nrows=100000, sep=",",
     else if (is.null(rowfilter) & !header) nlines <- getnrows(file)
   
     else {
-      iter <- iread.table(file, header=header,
+      myiter <- iread.table(file, header=header,
       row.names=row.names, sep=sep,
       nrows=nrows, as.is=as.is)
-      nlines <- foreach(x=iter, .combine=sum) %do%
+      nlines <- foreach(x=myiter, .combine=sum) %do%
       return( nrow(rowfilter(x)) )
     }
-    #print(nlines)
-    iter <- iread.table(file, header=header,
-    row.names=row.names, sep=sep,
-    nrows=nrows, as.is=as.is)
-    x <- nextElem(iter)
+    print(paste0("Number of Lines: :",nlines))
+    myiter <- iread.table(file, header=header,
+      row.names=row.names, sep=sep,
+      nrows=nrows, as.is=as.is)
+    x <- nextElem(myiter)
     if (!header) {names(x) <- cn}
     if (!is.null(rowfilter)) {x <- rowfilter(x)}
     print(cols)
@@ -94,15 +94,28 @@ big.read.table <- function(file, nrows=100000, sep=",",
   nextline <- nrow(x) + 1
   #print(nextline)
   #print(cols)
-  foo <- foreach(x=iter, .combine=rbind) %do% {
+  #print(class(myiter)
+  foo <- foreach(x=myiter, .combine=rbind) %do% {
     if (!is.null(rowfilter)) x <- rowfilter(x)
     if (!is.null(cols)) x <- x[,cols,drop=FALSE]
     gc()
-    print(dim(x))
-    for (i in 1:ncol(x)){
-      ans[as.integer(nextline:(nextline+nrow(x)-1)),i] <- x[,i]
+    rowindex <- as.integer(nextline:(nextline+nrow(x)-1))
+    #print(rowindex)
+    foreach(k=1:ncol(x),.combine = 'cbind') %do%{
+      print(paste0("column",k))
+      print(paste0("Class of columns ",class(x[,k])))
+      print(paste0("Type of columns ",typeof(x[,k])))
+      print(paste0("Dimension of the big.data.frame ", length(ans[rowindex,k])))
+      print(paste0("Class of the big.data.frame ", class(ans[rowindex,k])))
+      ans[rowindex,k] <- x[rowindex,k]
+      print("Successful insertion of a column.")
     }
+#     for (k in 1:ncol(x)){
+#       print(paste0("k=",k))
+#       ans[as.integer(nextline:(nextline+nrow(x)-1)),k] <- x[,k]
+#     }
     nextline <- as.integer(nextline + nrow(x))
+    print(paste0("Nextline:",nextline))
     return(nrow(x))
   }
   return(ans)

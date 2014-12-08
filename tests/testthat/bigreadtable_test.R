@@ -6,15 +6,17 @@
 library(testthat)
 setwd("~/Dropbox/stat662/big.data.frame/tests/testthat")
 # Make the data frame
-wh <- data.frame(rep(c(1L:26L),500),rep(letters,500),rep(rnorm(26),500))
+wh <- data.frame(rep(c(1L:26L),20),rep(letters,20),rep(rnorm(26),20))
 names(wh) <- c("int","factor","num")
 # WITH HEADER
 write.csv(wh,"withheader.csv",row.names=F)
 
 file <- "withheader.csv"
 x <- big.read.table(file = "withheader.csv",header = TRUE)
+x                    
+                    ,nrows = 100)
 y <- big.read.table(file = "withoutheader.csv",header = FALSE)
-
+x.csv <- read.csv(file = "withheader.csv",header = TRUE)
 y.csv <- read.csv(file = "withoutheader.csv",header = FALSE)
 
 # WITHOUT HEADER
