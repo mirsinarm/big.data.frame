@@ -319,6 +319,43 @@ setGeneric('is.big.data.frame', function(x) standardGeneric('is.big.data.frame')
 setMethod('is.big.data.frame', signature(x='big.data.frame'),
           function(x) return(TRUE))
 
+#####################################################
+#  Added by Miranda, Rose, Baobao
+#####################################################
+#' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
+#' @return a new \code{\link{big.data.frame}} object
+#' @param x a big.matrix object
+#' @author Miranda Sinnott-Armstrong
+#' @export
+as.big.data.frame <- function(x, names=NULL) {
+  if(class(x) != "big.matrix") {
+    stop ("Only converts big.matrix objects to a big.data.frame object.")
+  }
+  ans <- big.data.frame(nrow=nrow(x),
+                        classes=rep(typeof(x), ncol(x)),
+                        location=NULL,
+                        names=names,
+                        init=NULL)
+  
+  for(i in 1:ncol(x)) {
+    ans[, i] <- x[, i]
+  }
+  
+  if(!is.null(names)) {
+    
+    ###  This causes a warning: Descriptor file (if applicable) is not modified.
+    ###  However, I modified the descriptor file by hand.
+    ###  So the question is, either 1) suppress the warning, or 2) change the 
+    ###      names() function to modify the descriptor file.
+    
+    names(ans) <- names
+    ans@desc$names <- names
+  }
+  
+  return(ans)
+}
+
+
 
 
 #
@@ -381,9 +418,11 @@ setMethod("[",
             if (ncol(x)==1) return(as.data.frame(x@data[[1]][i],
                                                  stringsAsFactors=FALSE)[[1]])
             # Otherwise, have multiple columns to extract
+            
 ### Jay's original code:  issue was that outputted rownames were incorrect
 #             return(as.data.frame(lapply(x@data, function(a) a[i]),
 #                                  stringsAsFactors=FALSE))
+            
             ans <- as.data.frame(lapply(x@data, function(a) a[i]),
                           stringsAsFactors=FALSE)
             rownames(ans) <- i
@@ -658,41 +697,6 @@ big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL
   ans@data <- new.data
   return(ans)
 }
-
-
-#' @title Convert a \code{\link{big.matrix}} object to a \code{\link{big.data.frame}} object
-#' @return a new \code{\link{big.data.frame}} object
-#' @param x a big.matrix object
-#' @author Miranda Sinnott-Armstrong
-#' @export
-as.big.data.frame <- function(x, names=NULL) {
-  if(class(x) != "big.matrix") {
-    stop ("Only converts big.matrix objects to a big.data.frame object.")
-  }
-  ans <- big.data.frame(nrow=nrow(x),
-                 classes=rep(typeof(x), ncol(x)),
-                 location=NULL,
-                 names=names,
-                 init=NULL)
-
-  for(i in 1:ncol(x)) {
-    ans[, i] <- x[, i]
-  }
-  
-  if(!is.null(names)) {
-    
-    ###  This causes a warning: Descriptor file (if applicable) is not modified.
-    ###  However, I modified the descriptor file by hand.
-    ###  So the question is, either 1) suppress the warning, or 2) change the 
-    ###      names() function to modify the descriptor file.
-
-    names(ans) <- names
-    ans@desc$names <- names
-  }
-  
-  return(ans)
-}
-
 
 ##################################################################
 ###  Additions to big.char:  it has no head or tail function, which is necessary
