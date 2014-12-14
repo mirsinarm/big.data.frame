@@ -72,7 +72,7 @@ test_that("Extractions 1", {
   y <- data.frame(first=rep(-1.23, 10), second=rep("A", 10),
                   stringsAsFactors=FALSE)
   expect_that(x[], equals(y))
-  expect_that(x[1,], equals(y[1,]))
+  expect_that(x[1,], equals(y[1,])) # this fails ... no idea why ... print, class, typeof all look identical
   expect_that(x[1:2,], equals(y[1:2,]))
   expect_that(x[-c(1:2),], equals(y[-c(1:2),])) # removes the last two rows instead of the first two rows
   expect_that(x[1,1], equals(y[1,1]))
