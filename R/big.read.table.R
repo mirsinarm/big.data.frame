@@ -31,8 +31,8 @@ big.read.table <- function(file, nrows=100000, sep=",",
                           location=NULL) { 
   # Modified by Baobao Zhang
   if (!header) {
-       cl <- length(read.table(file,sep=sep,nrows=1,header=F))
-      cn <- paste0("V",c(1:cl))
+    cl <- length(read.table(file,sep=sep,nrows=1,header=F))
+    cn <- paste0("V",c(1:cl))
   } else {
     cn <- read.table(file,sep=sep,nrows=1)
   }
@@ -41,11 +41,11 @@ big.read.table <- function(file, nrows=100000, sep=",",
       warning("Estimate doesn't use rowfilter()")
       nlines <- getnrows(file)
       x <- read.table(file, sep=sep, row.names=row.names,
-      nrows=min(nlines, 1000), header=header)
+                      nrows=min(nlines, 1000), header=header)
       
       if (!is.null(cols)) x <- x[,cols,drop=FALSE]
       cat("Estimated read size without row filtering:",
-      floor(object.size(x)*nlines/nrow(x)/1e6), "MB\n")
+          floor(object.size(x)*nlines/nrow(x)/1e6), "MB\n")
       
       if (interactive()) {
         ANSWER <- readline("Continue with read (Y/n)? ")
@@ -55,7 +55,7 @@ big.read.table <- function(file, nrows=100000, sep=",",
         }
       }
     }
-  
+    # change it so it's doing if/else (2 things)
     if (is.null(rowfilter) & header) nlines <- getnrows(file)-1
   
     else if (is.null(rowfilter) & !header) nlines <- getnrows(file)

@@ -211,16 +211,15 @@ setMethod('head', signature(x='big.data.frame'),
 setMethod('tail', signature(x='big.data.frame'),
           function(x, n=6) {
             if(ncol(x) > 1000) {
-              warning("Your big.data.frame has more than 1000 columns.  Only the first 999 were printed.")
+              warning("Your big.data.frame has more than 1000 columns.
+                      Only the first 999 were printed.")
               max.col <- 999
-            }
-            else max.col <- ncol(x)
+            } else max.col <- ncol(x)
             if (nrow(x) < n) {
               ans <- data.frame(x[,1:max.col])
               colnames(ans) <- names(x@data[1:max.col])
               return(ans)
-            }
-            else {
+            } else {
               end <- nrow(x)  
               ans <- data.frame(x[(end-n+1):end,1:max.col])
               rownames(ans) <- (end-n+1):end
@@ -585,7 +584,7 @@ setMethod("$<-", "big.data.frame",
             
             ## 'name' is a character(1)
             val <- rep(value, length.out=nrow(x))
-            x@data[[name]] <- val
+            x@data[[name]] <- val # need to fix: open bracket close bracket
             return(x)
           })
 
