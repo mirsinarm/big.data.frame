@@ -30,13 +30,14 @@ big.read.table <- function(file, nrows=100000, sep=",",
                           as.is=TRUE, estimate=FALSE,
                           location=NULL) { 
   # Modified by Baobao Zhang
+  ###  What is cn? is it the column name?  Do you mind if I change it to col.name?
   if (!header) {
-    cl <- length(read.table(file,sep=sep,nrows=1,header=F))
+    cl <- length(read.table(file, sep=sep, nrows=1, header=FALSE))
     cn <- paste0("V",c(1:cl))
   } else {
-    cn <- read.table(file,sep=sep,nrows=1)
-  }
-  # End of modification
+    cn <- read.table(file, sep=sep, nrows=1)
+  } # End of modification
+  
   if (estimate) {
       warning("Estimate doesn't use rowfilter()")
       nlines <- getnrows(file)
@@ -47,6 +48,7 @@ big.read.table <- function(file, nrows=100000, sep=",",
       cat("Estimated read size without row filtering:",
           floor(object.size(x)*nlines/nrow(x)/1e6), "MB\n")
       
+      # Checking whether the read size is acceptable and should continue:
       if (interactive()) {
         ANSWER <- readline("Continue with read (Y/n)? ")
         if (substring(ANSWER, 1, 1) != "Y") {
@@ -55,48 +57,58 @@ big.read.table <- function(file, nrows=100000, sep=",",
         }
       }
     }
+  
     # change it so it's doing if/else (2 things)
+  ###  I can't quite remember what the problem with this was
     if (is.null(rowfilter) & header) nlines <- getnrows(file)-1
-  
     else if (is.null(rowfilter) & !header) nlines <- getnrows(file)
-  
     else {
       myiter <- iread.table(file, header=header,
-      row.names=row.names, sep=sep,
-      nrows=nrows, as.is=as.is)
+                            row.names=row.names, sep=sep, 
+                            nrows=nrows, as.is=as.is)
+      ### don't need foreach here
       nlines <- foreach(x=myiter, .combine=sum) %do%
-      return( nrow(rowfilter(x)) )
+      return(nrow(rowfilter(x)))
     }
+  
     # Modification by Baobao Zhang
-    print(paste0("Number of Rows: ",nlines))
+    print(paste0("Number of Rows: ", nlines))
     myiter <- iread.table(file, header=header,
                           row.names=row.names, sep=sep,
                           nrows=nrows, as.is=as.is)
     x <- nextElem(myiter)
-    if (!header) {names(x) <- cn}
-    if (!is.null(rowfilter)) {x <- rowfilter(x)}
-    if (!is.null(cols)) {x <- x[,cols,drop=FALSE]}
+  
+  ### Accounting for edge cases???
+    if (!header) names(x) <- cn
+    if (!is.null(rowfilter)) x <- rowfilter(x)
+    if (!is.null(cols)) x <- x[, cols, drop=FALSE]
+
+    # Fixing the class types:
     theclasses <- sapply(x, class)
     theclasses[theclasses=="numeric"] <- "double"
     ans <- big.data.frame(nlines, location=location,
                           classes=theclasses, names=names(x))
+  
     # for loop to input the data into big.data.frame by column
-    foreach(k=1:ncol(x),.combine = 'cbind') %do%{
-      ans[,k] <- x[,k]
-    }
-    # End of Modification
-  nextline <- nrow(x) + 1
+  ### don't need foreach here
+    foreach(k=1:ncol(x), .combine = 'cbind') %do% {
+      ans[, k] <- x[, k]
+    } # End of Modification
+  
+  nextline <- nrow(x)+1
+  ### probably don't need foreach here
   foo <- foreach(x=myiter, .combine=rbind) %do% {
     if (!is.null(rowfilter)) x <- rowfilter(x)
-    if (!is.null(cols)) x <- x[,cols,drop=FALSE]
-    gc()
+    if (!is.null(cols)) x <- x[, cols, drop=FALSE]
+    gc() # do we need this?
+    
     # Modification by Baobao Zhang
     rowindex <- as.integer(nextline:(nextline+nrow(x)-1))
-    foreach(k=1:ncol(x),.combine = 'cbind') %do%{
+    foreach(k=1:ncol(x), .combine = 'cbind') %do% {
       ans[rowindex,k] <- x[,k]
-    }
-    # End of Modification
-    nextline <- as.integer(nextline + nrow(x))
+    } # End of Modification
+    
+    nextline <- as.integer(nextline+nrow(x))
     return(nrow(x))
   }
   return(ans)

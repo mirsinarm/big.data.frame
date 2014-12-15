@@ -179,7 +179,6 @@ setMethod('length', signature(x="big.data.frame"),
 #' @rdname big.data.frame-methods
 #' @param x a big.data.frame
 #' @export head
-#' 
 setMethod('head', signature(x='big.data.frame'),
           function(x, n=6) {
             if(ncol(x) > 1000) {
@@ -355,8 +354,6 @@ as.big.data.frame <- function(x, names=NULL) {
 }
 
 
-
-
 #
 # Get/set signatures!
 #
@@ -416,7 +413,7 @@ setMethod("[",
             # Here, current default is drop=TRUE
             if (ncol(x)==1) return(as.data.frame(x@data[[1]][i],
                                                  stringsAsFactors=FALSE)[[1]])
-            # Otherwise, have multiple columns to extract
+            # Otherwise, have multiple columns to extract:
             
 ### Jay's original code:  issue was that outputted rownames were incorrect
 #             return(as.data.frame(lapply(x@data, function(a) a[i]),
@@ -452,33 +449,26 @@ setMethod("[<-",
 #             for (jj in 1:ncol(x)) x@data[[jj]][i] <- value[,jj]
 #             return(x)
             
-            # repeat value so that it is the same length as the number of cols
+            # repeat 'value' so that it is the same length as the number of cols
             val <- rep(value, length.out=ncol(x))
-            for (jj in 1:ncol(x)) {
-              x@data[[jj]][i] <- val[jj]
-            }
+            for (jj in 1:ncol(x)) x@data[[jj]][i] <- val[jj]
             return(x)
           })
 
 
+# We thought we modified this, but apparently not ... so I deleted the code that we wrote
+# that turned out to be the same.
 #' @rdname big.data.frame-methods
 #' @exportMethod [
 setMethod("[", signature(x = "big.data.frame", i="missing", j="ANY", drop="missing"),
     function(x, i, j, ..., drop) {
     #cat("BDF get:(missing,ANY,missing)\n")
-      
-###  Jay's original code
-#       # Consider simplifying depending on factor issue, eventually:
-#       if (length(j)==1) return(as.data.frame(x@data[[j]][],
-#                                              stringsAsFactors=FALSE)[[1]])
-#       # Otherwise, multiple column extraction:
-#       return(as.data.frame(lapply(x@data[j], function(a) a[]),
-#                            stringsAsFactors=FALSE))
-
-      n <- names(x)[j]
-      if(length(j) == 1) return(slot(x, 'data')[[j]][]) # this is entirely to pass one test in testthat
-      return(as.data.frame(lapply(x@data[n], function(a) a[]),
-                          stringsAsFactors=FALSE))
+      # Consider simplifying depending on factor issue, eventually:
+      if (length(j)==1) return(as.data.frame(x@data[[j]][],
+                                             stringsAsFactors=FALSE)[[1]])
+      # Otherwise, multiple column extraction:
+      return(as.data.frame(lapply(x@data[j], function(a) a[]),
+                           stringsAsFactors=FALSE))
     })
 
 
@@ -504,9 +494,7 @@ setMethod("[<-",
             
             #cat("BDF set:(missing,ANY,missing)\n")
             val <- rep(value, length.out=nrow(x))
-            for (jj in 1:nrow(x)) {
-              x@data[[j]][jj] <- val[jj]
-            }
+            for (jj in 1:nrow(x)) x@data[[j]][jj] <- val[jj]
             return(x)
           })
 
@@ -518,12 +506,7 @@ signature(x = "big.data.frame", i="missing", j="ANY", drop="logical"),
     function(x, i, j, ..., drop) {
         #cat("BDF get:(missing,ANY,ANY)\n")
       
-###  Jay's original code:
-      # Our only change was to add the capability to extract by column
-      # name in addition to index number
-        n <- names(x)[j]
-
-        if (length(j)==1) {
+      if (length(j)==1) {
           if (!drop) {
             ans <- as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)
             names(ans) <- names(x@data)[j]
@@ -532,7 +515,7 @@ signature(x = "big.data.frame", i="missing", j="ANY", drop="logical"),
           return(as.data.frame(x@data[[j]][], stringsAsFactors=FALSE)[[1]])
         } # and otherwise we have multiple columns to extract:
         
-        return(as.data.frame(lapply(x@data[n], function(a) a[]),
+        return(as.data.frame(lapply(x@data[j], function(a) a[]),
                     stringsAsFactors=FALSE, drop=drop))
     })
 
@@ -563,7 +546,7 @@ setMethod("$", "big.data.frame",
             if(nrow(x) > 1000) {
               print("Warning:  printing too many rows.")
             }
-            else return(slot(x, 'data')[[name]][])
+            else return(x@data[[name]][])
           })
 
 #####################################################
@@ -576,24 +559,19 @@ setMethod("$<-", "big.data.frame",
           function(x, name, value)
           {
             
-            
             # To code:  when the class changes for that column
             #             if(typeof(x[1, j]) != typeof(value)
+            # maybe use match()?
 
-            
-            
             ## 'name' is a character(1)
             val <- rep(value, length.out=nrow(x))
-            x@data[[name]] <- val # need to fix: open bracket close bracket
+            x@data[[name]][] <- val
             return(x)
           })
 
-
-
 ######################################################################
-# Entirely new functions written by Rose, Miranda, and Baobao
+# Added by Rose, Miranda, and Baobao
 ######################################################################
-
 #' @title Remove columns from an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with fewer columns
 #' @param x a big.data.frame object
@@ -609,18 +587,29 @@ big.drop.cols <- function(x, index, location=NULL) {
   } else if (length(unique(index)) >= ncol(x)) {
     stop("Index is entire big.data.frame")
   } 
-  ans <- big.data.frame(nrow=x@desc$dim[1],
-                        classes=x@desc$classes[-index],
-                        location=location,
-                        names=x@desc$names[-index],
-                        maxchar=x@desc$maxchar[-index],
-                        init=NULL)
-  ans@data <- x@data[-index]
-  return(ans)
+  # a shorter version, modified 12/15/2014:
+  # question: how to deal with the backing file?
+    x@data <- x@data[-c(index)]
+    x@desc$dim[2] <- length(x@data)
+    x@desc$classes <- x@desc$classes[-c(index)]
+    x@desc$maxchar <- x@desc$maxchar[-c(index)]
+    x@desc$names <- x@desc$names[-c(index)]
+    return(x)
+  
+# the old version:
+#   ans <- big.data.frame(nrow=x@desc$dim[1],
+#                         classes=x@desc$classes[-index],
+#                         location=location,
+#                         names=x@desc$names[-index],
+#                         maxchar=x@desc$maxchar[-index],
+#                         init=NULL)
+#   ans@data <- x@data[-index]
+#   return(ans)
 }
 
-
-
+######################################################################
+# Added by Rose, Miranda, and Baobao
+######################################################################
 #' @title Add an extra column to an existing \code{\link{big.data.frame}}
 #' @return a new \code{\link{big.data.frame}} object, with one extra column
 #' @param x a big.data.frame object
@@ -628,22 +617,55 @@ big.drop.cols <- function(x, index, location=NULL) {
 #'  with a single column
 #' @param after the position after which new.col will be appear
 #' @export
-big.add.col <- function(x, new.col, after, new.name, location=NULL) {
+big.add.col <- function(x, new.col, new.name=NULL, after=ncol(x), location=NULL) {
   if (class(new.col) == "big.matrix") new.class <- "double"
   else if (class(new.col) == "big.char") new.class <- "char"
   else stop ("new.col must be either a big.matrix or big.char object")
   
-  new.classes <- append(x@desc$classes, new.class, after=after)
-  new.names <- append(x@desc$names, new.name, after=after)
-  new.data <- append(x@data[], new.col, after=after)
-  names(new.data) <- new.names
+  # A problem: how to handle the backing files?
   
-  ans <- big.data.frame(x@desc$dim[1], 
-                        classes=new.classes,
-                        names=new.names,
-                        location=location)
-  ans@data <- new.data
-  return(ans)
+  # For now, stop if they don't pass a maxchar
+  if (class(new.col) == "big.char" & maxchar == NA) {
+    stop("Warning: must set a maxchar for your new big.char column.")
+  }
+  
+  # If a new name wasn't provided:
+  if (after > ncol(x)) after <- ncol(x)
+  if(is.null(new.name)) new.name <- paste("V", after+1, sep=".")
+  
+  # Depending on the value of 'after':
+  if (after == 0) {
+    x@data <- c(new.col, x@data)
+    x@desc$classes <- c(typeof(new.col), x@desc$classes)
+    names(x) <- c(new.name, x@desc$names)
+    x@desc$maxchar <- c(maxchar, x@desc$maxchar) # might change if don't terminate upon big.char without maxchar
+  } else if (after >= ncol(x)) {
+    x@data <- c(x@data, new.col)
+    x@desc$classes <- c(x@desc$classes, typeof(new.col))
+    names(x) <- c(x@desc$names, new.name)
+    x@desc$maxchar <- c(x@desc$maxchar, maxchar) # might change if don't terminate upon big.char without maxchar
+  } else {
+    x@data <- c(x@data[1:after], new.col, x@data[(after+1):length(x@data)])
+    x@desc$classes <- c(x@desc$classes[1:after], typeof(new.col), x@desc$classes[(after+1):length(x@desc$classes)])
+    names(x) <- c(x@desc$names[1:after], new.name, x@desc$names[(after+1):length(x@desc$names)])
+    x@desc$maxchar <- c(x@desc$maxchar[1:after], maxchar, x@desc$maxchar[(after+1):length(x@desc$maxchar)])
+  }
+  
+  x@desc$dim <- c(nrow(x), length(x@data))
+  return(x)
+  
+  # old version that worked by creating a new big.data.frame:
+#   new.classes <- append(x@desc$classes, new.class, after=after)
+#   new.names <- append(x@desc$names, new.name, after=after)
+#   new.data <- append(x@data[], new.col, after=after)
+#   names(new.data) <- new.names
+#   
+#   ans <- big.data.frame(x@desc$dim[1], 
+#                         classes=new.classes,
+#                         names=new.names,
+#                         location=location)
+#   ans@data <- new.data
+#   return(ans)
 }
 
 
@@ -662,68 +684,44 @@ big.change.col.class <- function(x, new.col, index, new.name=NULL, location=NULL
   else if (class(new.col) == "big.char") new.class <- "char"
   else stop ("new.col must be either a big.matrix or big.char object")
 
+  if (index < 1 | index > ncol(x)) stop ("Index must exist already; use big.add.col to create a new column.")
+  
   # If a new name wasn't provided:
   if(is.null(new.name)) new.name <- paste("V", index, sep=".")
   
-  # This is SO not an elegant way of handling these problems
   # Edge cases:  index=1, index=ncol(x)
-  if (index == 1) {
-    new.classes <- c(new.class, x@desc$classes[(index+1):ncol(x)])
-    new.names <- c(new.name, x@desc$names[(index+1):ncol(x)])
-    new.data <- c(new.col, x@data[(index+1):ncol(x)])
-    names(new.data) <- new.names
-  }
-  
-  else if (index == ncol(x)) {
-    new.classes <- c(x@desc$classes[1:(index-1)], new.class)
-    new.names <- c(x@desc$names[1:(index-1)], new.name)
-    new.data <- c(x@data[1:(index-1)], new.col)
-    names(new.data) <- new.names
-  }
-  
-  else {
-    new.classes <- c(x@desc$classes[1:(index-1)], new.class, x@desc$classes[(index+1):ncol(x)])
-    new.names <- c(x@desc$names[1:(index-1)], new.name, x@desc$names[(index+1):ncol(x)])
-    new.data <- c(x@data[1:(index-1)], new.col, x@data[(index+1):ncol(x)])
-    names(new.data) <- new.names
-  }
-  
-  # Create the new big.data.frame with the updated column
-  ans <- big.data.frame(x@desc$dim[1], 
-                        classes=new.classes,
-                        names=new.names,
-                        location=location)
-  ans@data <- new.data
-  return(ans)
+  x@data[[index]] <- new.col
+  x@desc$classes[[index]] <- new.class
+  x@desc$names[[index]] <- new.name
+  return(x)
 }
 
 ##################################################################
 ###  Additions to big.char:  it has no head or tail function, which is necessary
-###  for printing out x@data
+###  for printing out x@data when one of the columns is a big.char
 
-# 
-# #' @title head functionality for a big.char object
-# #' @author Miranda Sinnott-Armstrong
-# #' @rdname big.char-methods
-# #' @param x a \code{\link{big.char}}
-# #' @export head
-# #' 
-# setMethod('head', signature(x='big.char'),
-#       function(x, n=6) {
-#         if (ncol(x) < n) return(x[])
-#         else return(x[1:n])
-#       }
-# )
-# 
-# #' @title tail functionality for a big.char object
-# #' @author Miranda Sinnott-Armstrong
-# #' @rdname big.char-methods
-# #' @param x a \code{\link{big.char}}
-# #' @export tail
-# setMethod('tail', signature(x='big.char'),
-#       function(x, n=6) {
-#         if (ncol(x) < n) return(x[])
-#         else return(x[(ncol(x)-n+1):ncol(x)])
-#       }
-# )
-#
+
+#' @title head functionality for a big.char object
+#' @author Miranda Sinnott-Armstrong
+#' @rdname big.char-methods
+#' @param x a \code{\link{big.char}}
+#' @export head
+#' 
+setMethod('head', signature(x='big.char'),
+      function(x, n=6) {
+        if (ncol(x) < n) return(x[])
+        else return(x[1:n])
+      }
+)
+
+#' @title tail functionality for a big.char object
+#' @author Miranda Sinnott-Armstrong
+#' @rdname big.char-methods
+#' @param x a \code{\link{big.char}}
+#' @export tail
+setMethod('tail', signature(x='big.char'),
+      function(x, n=6) {
+        if (ncol(x) < n) return(x[])
+        else return(x[(ncol(x)-n+1):ncol(x)])
+      }
+)
